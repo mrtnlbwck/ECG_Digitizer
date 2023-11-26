@@ -54,8 +54,8 @@ class DataProcessing:
 
     def scale(self, x, y, scaling_factor_x, scaling_factor_y):
 
-        scaled_x = [xi * scaling_factor_x for xi in x]
-        scaled_y = [yi * scaling_factor_y for yi in y]
+        scaled_x = [xi / scaling_factor_x for xi in x]
+        scaled_y = [yi / scaling_factor_y for yi in y]
 
         for i in range(len(x)):
             x[i] = scaled_x[i]

@@ -1,14 +1,30 @@
-# -*- coding: utf-8 -*-
 import cv2
 import numpy as np
-from PyQt5 import QtCore, QtGui, QtWidgets
-from data_processing import DataProcessing
-from pixels_processing import PixelsProcessing
-from result_window import Ui_result
+from PyQt5.QtWidgets import QMainWindow, QLabel, QPushButton, QApplication, QDialog
+from PyQt5 import uic, QtWidgets, QtCore
+import sys
+
+from app.data_processing import DataProcessing
+from app.pixels_processing import PixelsProcessing
+from image_processing import ImageProcessing  # Assuming this import is necessary
 
 
-class Ui_scale(object):
-    def __init__(self):
+class ScaleUI(QDialog):
+    def __init__(self, img_rgb, img_gray, chart_data):
+        super(ScaleUI, self).__init__()
+
+        uic.loadUi("C:/Users/marty/Documents/GitHub/ECG_Digitizer/ui/scale_window.ui", self)
+
+        self.label_speed = self.findChild(QLabel, "label_speed")
+        self.label_volt = self.findChild(QLabel, "label_volt")
+        self.label_s = self.findChild(QLabel, "label_s")
+        self.label_mV = self.findChild(QLabel, "label_mV")
+        self.button = self.findChild(QPushButton, "pushButton")
+
+        self.button.clicked.connect(self.click)
+
+        self.image_processor = ImageProcessing()  # Instantiate ImageProcessing
+
         self.reference_points = []
         self.scale_x = None
         self.scale_y = None
@@ -16,53 +32,11 @@ class Ui_scale(object):
         self.pixels_processor = PixelsProcessing()
         self.data_processor = DataProcessing()
 
-    def setupUi(self, scale_window, img_rgb, img_gray, chart_data):
         self.img_gray = img_gray
         self.img_rgb = img_rgb
         self.chart_after_delete = chart_data
-        scale_window.setObjectName("Scale Window")
-        scale_window.resize(454, 190)
-        self.buttonBox = QtWidgets.QDialogButtonBox(scale_window)
-        self.buttonBox.setGeometry(QtCore.QRect(30, 240, 341, 32))
-        self.buttonBox.setOrientation(QtCore.Qt.Horizontal)
-        self.buttonBox.setStandardButtons(QtWidgets.QDialogButtonBox.Cancel | QtWidgets.QDialogButtonBox.Ok)
-        self.buttonBox.setObjectName("buttonBox")
-        self.textEdit = QtWidgets.QTextEdit(scale_window)
-        self.textEdit.setGeometry(QtCore.QRect(280, 20, 91, 31))
-        self.textEdit.setObjectName("textEdit")
-        self.textEdit_2 = QtWidgets.QTextEdit(scale_window)
-        self.textEdit_2.setGeometry(QtCore.QRect(280, 60, 91, 31))
-        self.textEdit_2.setObjectName("textEdit_2")
-        self.scale_window_button = QtWidgets.QPushButton(scale_window)
-        self.scale_window_button.setGeometry(QtCore.QRect(140, 120, 171, 51))
-        self.scale_window_button.setObjectName("scale_button")
-        self.scale_window_button.clicked.connect(self.on_submit_clicked)
-        self.label = QtWidgets.QLabel(scale_window)
-        self.label.setGeometry(QtCore.QRect(30, 30, 241, 16))
-        self.label.setObjectName("label")
-        self.label_2 = QtWidgets.QLabel(scale_window)
-        self.label_2.setGeometry(QtCore.QRect(30, 70, 241, 16))
-        self.label_2.setObjectName("label_2")
-        self.label_3 = QtWidgets.QLabel(scale_window)
-        self.label_3.setGeometry(QtCore.QRect(380, 30, 55, 16))
-        self.label_3.setObjectName("label_3")
-        self.label_4 = QtWidgets.QLabel(scale_window)
-        self.label_4.setGeometry(QtCore.QRect(380, 70, 55, 16))
-        self.label_4.setObjectName("label_4")
 
-        self.retranslateUi(scale_window)
-        self.buttonBox.accepted.connect(scale_window.accept)  # type: ignore
-        self.buttonBox.rejected.connect(scale_window.reject)  # type: ignore
-        QtCore.QMetaObject.connectSlotsByName(scale_window)
-
-    def retranslateUi(self, scale_window):
-        _translate = QtCore.QCoreApplication.translate
-        scale_window.setWindowTitle(_translate("scale_window", "Wprowadź wartości do przeliczenia skali"))
-        self.scale_window_button.setText(_translate("scale", "ZATWIERDŹ"))
-        self.label.setText(_translate("scale_window", "Wprowadź szybkość przesuwu zapisu: "))
-        self.label_2.setText(_translate("scale_window", "Wprowadź wartość potencjału:"))
-        self.label_3.setText(_translate("scale_window", "mm/s"))
-        self.label_4.setText(_translate("scale_window", "mm/mV"))
+        self.show()
 
     def calculate_pixel_distance(self, point1, point2):
         return np.sqrt((point2[0] - point1[0]) ** 2 + (point2[1] - point1[1]) ** 2)
@@ -95,8 +69,10 @@ class Ui_scale(object):
                 pixel_distance_x = self.calculate_pixel_distance(self.reference_points[-4], self.reference_points[-3])
                 pixel_distance_y = self.calculate_pixel_distance(self.reference_points[-2], self.reference_points[-1])
 
-                self.scale_x = x_mm / (2 * pixel_distance_x)
-                self.scale_y = y_mm / (2 * pixel_distance_y)
+                self.scale_x = 5/(x_mm*pixel_distance_x)
+                self.scale_y = pixel_distance_y / (5 * y_mm)
+
+                print(self.scale_x, self.scale_y)
 
                 self.end_of_clicking = True
 
@@ -124,13 +100,13 @@ class Ui_scale(object):
                            cursor_color, cv2.MARKER_CROSS, markerSize=15, thickness=2)
             cv2.imshow("Zoomed Image", zoomed_image)
 
-    def openWindow(self, scale_x, scale_y, img_gray, chart_data):
-        self.window = QtWidgets.QDialog()
-        self.ui = Ui_result()
-        self.ui.setupUi(self.window, scale_x, scale_y, img_gray, chart_data)
-        self.window.show()
+    # def openWindow(self, scale_x, scale_y, img_gray, chart_data):
+    #     self.window = QtWidgets.QDialog()
+    #     self.ui = Ui_result()
+    #     self.ui.setupUi(self.window, scale_x, scale_y, img_gray, chart_data)
+    #     self.window.show()
 
-    def on_submit_clicked(self):
+    def click(self):
         # Obsługa przycisku "ZATWIERDŹ"
         value1 = int(self.textEdit.toPlainText())  # Wartość z pierwszego pola tekstowego
         value2 = int(self.textEdit_2.toPlainText())
@@ -140,18 +116,16 @@ class Ui_scale(object):
         cv2.imshow("Image", self.img_rgb)
         cv2.setMouseCallback("Image", self.on_mouse, callback_params)
 
-
 if __name__ == "__main__":
     import sys
 
     app = QtWidgets.QApplication(sys.argv)
     scale_window = QtWidgets.QDialog()
 
-    ui = Ui_scale()
+    ui = ScaleUI()
     img_rgb = ui.img_rgb
     img_gray = ui.img_gray
     chart_data = ui.chart_after_delete
-    ui.setupUi(scale_window, img_rgb, img_gray, chart_data)
 
     pixels_processor = PixelsProcessing()
     data_processor = DataProcessing()
