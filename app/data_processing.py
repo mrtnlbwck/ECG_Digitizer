@@ -24,19 +24,6 @@ class DataProcessing:
 
         return x_values, y_values
 
-    def mean_chart(self, x, y):
-        data = {'x': x, 'y': y}
-
-        # Tworzenie obiektu DataFrame z danymi
-        df = pd.DataFrame(data)
-
-        # Obliczenie średniej wartości y dla każdej unikalnej wartości x
-        average_y = df.groupby('x')['y'].mean().reset_index()
-
-        new_y = np.array(average_y['y'])
-        new_x = np.array(average_y['x'])
-
-        return new_x, new_y
 
     def mean_chart(self, x, y):
         data = {'x': x, 'y': y}
@@ -54,8 +41,8 @@ class DataProcessing:
 
     def scale(self, x, y, scaling_factor_x, scaling_factor_y):
 
-        scaled_x = [xi / scaling_factor_x for xi in x]
-        scaled_y = [yi / scaling_factor_y for yi in y]
+        scaled_x = [xi * scaling_factor_x for xi in x]
+        scaled_y = [yi * scaling_factor_y for yi in y]
 
         for i in range(len(x)):
             x[i] = scaled_x[i]
@@ -70,10 +57,7 @@ class DataProcessing:
         x_interp = np.linspace(np.min(x), np.max(x), 250)
 
         y_linear = interp1d(x, y)
-        # y_quadratic = interp1d(x, y, kind="quadratic")
-        # print(y_linear(3))
 
-        # plt.plot(x, y, "o", label="Data")
         plt.plot(x_interp, y_linear(x_interp), "red")
         plt.title('Wykres EKG')
         plt.show()

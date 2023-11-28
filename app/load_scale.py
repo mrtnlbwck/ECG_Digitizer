@@ -7,7 +7,6 @@ import sys
 
 
 class ChangeUI(QDialog):
-    valuesChanged = QtCore.pyqtSignal(int, int)
     def __init__(self):
         super(ChangeUI, self).__init__()
         print("ScaleUI initialized")  # Add this line
@@ -27,13 +26,9 @@ class ChangeUI(QDialog):
 
         self.button.clicked.connect(self.click)
 
-
-
     def click(self):
         self.speed_value = int(self.text_speed.toPlainText())
         self.volt_value = int(self.text_volt.toPlainText())
-
-        self.valuesChanged.emit(self.speed_value, self.volt_value)
 
         self.close()
 

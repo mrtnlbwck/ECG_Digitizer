@@ -4,14 +4,14 @@ from scipy import ndimage
 
 class PixelsProcessing:
     def put_into_pixels(self, chart_after_filter):
-        pixels = np.argwhere(chart_after_filter == 255)
+
+        pixels = np.argwhere(chart_after_filter == 0)
 
         return pixels
 
     def process_and_visualize_data(self, coordinates, img, size_threshold=120):
-        # Create a binary matrix from the coordinates
-        grid_shape = img.shape
-        data = np.zeros(grid_shape, dtype=int)
+        shape = img.shape
+        data = np.zeros(shape, dtype=int)
         for coord in coordinates:
             x, y = coord
             data[x, y] = 1
@@ -28,5 +28,6 @@ class PixelsProcessing:
                 data[labeled_data == label] = 0
 
         new_coordinates = np.argwhere(data)
+
 
         return new_coordinates
