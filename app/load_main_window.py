@@ -1,16 +1,14 @@
 import sys
+
 import qimage2ndarray
 from PyQt5 import QtCore, QtWidgets
-from PyQt5.QtCore import QRectF
-from PyQt5.QtGui import QPixmap
-from PyQt5.QtWidgets import QMainWindow, QLabel, QPushButton, QApplication, QDialog, QFileDialog, QGraphicsScene, \
-    QGraphicsView, QGraphicsItem
-from app.data_processing import DataProcessing
-from app.load_scale_window import ChangeUI
-from app.pixels_processing import PixelsProcessing
-from app.scripts import Images
+from data_processing import DataProcessing
+from load_scale_window import ChangeUI
+from pixels_processing import PixelsProcessing
+from scripts import Images
 from image_processing import ImageProcessing
 from widgets import *
+import resources
 
 
 class UI(QMainWindow):
@@ -18,7 +16,12 @@ class UI(QMainWindow):
         super(UI, self).__init__()
 
         self.files = None
-        uic.loadUi("../ui/main_window.ui", self)
+        uic.loadUi(f"{pathlib.Path(__file__).parent.absolute()}\\..\\ui\\main_window.ui", self)
+
+
+
+
+
 
         self.label = self.findChild(QLabel, "label")
         self.button = self.findChild(QPushButton, "pushButton")
@@ -43,7 +46,7 @@ class ImageUI(QWidget):
     def __init__(self, files):
         super(ImageUI, self).__init__()
 
-        uic.loadUi("../ui/image.ui", self)
+        uic.loadUi(f"{pathlib.Path(__file__).parent.absolute()}\\..\\ui\\image_window.ui", self)
 
         self.img_list, self.rb = [], None
         for f in files:
@@ -66,6 +69,7 @@ class ImageUI(QWidget):
         self.save_btn = self.findChild(QPushButton, "back_btn")
         self.save_btn.clicked.connect(self.click_back)
         self.save_btn.clicked.connect(self.close)
+        self.slider = self.findChild(QSlider, "slider")
 
         self.ui = None
         self.main_window = None
@@ -97,6 +101,7 @@ class ImageUI(QWidget):
 
         self.speed_value = 25
         self.volt_value = 10
+
     def update_img(self, movable=False):
         self.img = QPixmap(qimage2ndarray.array2qimage(cv2.cvtColor(self.img_class.img, cv2.COLOR_BGR2RGB)))
         self.scene.removeItem(self.scene_img)
@@ -105,6 +110,7 @@ class ImageUI(QWidget):
             self.scene_img.setFlag(QGraphicsItem.ItemIsMovable)
         else:
             self.fitInView()
+
     def get_zoom_factor(self):
         return self.zoom_factor
 
@@ -118,13 +124,18 @@ class ImageUI(QWidget):
         self.img_gray, self.img_rgb = self.image_processor.color_change_chart(self.saved_image)
         self.chart_after_filter = self.image_processor.filtering(self.img_gray)
 
+        instruction_text1 = "Mark two points on the x-axis that form a segment of 5mm,"
+        instruction_text2 = "then two more points on the y-axis"
 
 
+        cv2.putText(self.img_rgb, instruction_text1, (10, 30), cv2.FONT_HERSHEY_SIMPLEX, 0.8, (60, 20, 220),
+                    2)
+        cv2.putText(self.img_rgb, instruction_text2, (10, 55), cv2.FONT_HERSHEY_SIMPLEX, 0.8, (60,20, 220),
+                    2)
         cv2.imshow("Image", self.img_rgb)
+
+
         cv2.setMouseCallback("Image", self.on_mouse)
-
-
-
 
     def click_change(self):
         change_window = ChangeUI()
@@ -136,8 +147,10 @@ class ImageUI(QWidget):
     def handle_values_changed(self, speed_value, volt_value):
         self.speed_value = speed_value
         self.volt_value = volt_value
+
     def click_back(self):
         self.ui = UI()
+
     def wheelEvent(self, event):
         if self.zoom_moment:
             if event.angleDelta().y() > 0:
@@ -182,30 +195,26 @@ class ImageUI(QWidget):
                 cv2.circle(self.img_rgb, (x, y), 2, (255, 0, 0), -1)
                 cv2.putText(self.img_rgb, 'y', (x, y), cv2.FONT_HERSHEY_SIMPLEX, 0.6, (0, 0, 0), 2)
 
-
             if len(self.reference_points) == 4:
                 cv2.waitKey(500)
                 pixel_distance_x = self.calculate_pixel_distance(self.reference_points[-4], self.reference_points[-3])
                 pixel_distance_y = self.calculate_pixel_distance(self.reference_points[-2], self.reference_points[-1])
-
                 self.scale_x = 5 / (pixel_distance_x * self.speed_value)
                 self.scale_y = 5 / (pixel_distance_y * self.volt_value)
-
 
                 self.end_of_clicking = True
 
                 if self.end_of_clicking:
                     cv2.destroyAllWindows()
 
-
                     pixels = self.pixels_processor.put_into_pixels(self.chart_after_filter)
                     sorted_data = self.data_processor.sorting(pixels)
                     xy = self.data_processor.extract_xy(sorted_data)
                     scaled_xy = self.data_processor.scale(*xy, self.scale_x, self.scale_y)
                     mean_xy = self.data_processor.mean_chart(*scaled_xy)
-                    self.data_processor.spline(*mean_xy)
+                    spline_xy = self.data_processor.spline(*mean_xy)
+                    self.data_processor.export_to_edf("data.edf", *spline_xy)
                     self.reference_points.clear()
-
 
         if event == cv2.EVENT_MOUSEMOVE:
             zoom_factor = 3
@@ -222,12 +231,16 @@ class ImageUI(QWidget):
             cursor_y = y - crop_y_start
 
             # Crop the region from the original image
+
             zoomed_image = self.img_rgb[crop_y_start:crop_y_end, crop_x_start:crop_x_end]
             zoomed_image = cv2.resize(zoomed_image, None, fx=zoom_factor, fy=zoom_factor)
 
             cursor_color = (0, 255, 0)  # Green color for cursor
             cv2.drawMarker(zoomed_image, (cursor_x * zoom_factor, cursor_y * zoom_factor),
                            cursor_color, cv2.MARKER_CROSS, markerSize=15, thickness=2)
+            zoomed_text = "Move the cursor to explore the image"
+            cv2.putText(zoomed_image, zoomed_text, (10, 30), cv2.FONT_HERSHEY_SIMPLEX, 0.75, (60, 20, 220))
+
             cv2.imshow("Zoomed Image", zoomed_image)
 
 

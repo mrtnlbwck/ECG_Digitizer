@@ -25,10 +25,14 @@ class ImageProcessing:
 
         _, binary_image = cv2.threshold(ekg_image, 133, 255, cv2.THRESH_BINARY)
 
+        cv2.imshow('binary', binary_image)
+
         filtered_image = cv2.medianBlur(binary_image, 3)
 
         kernel_opening = np.ones((5, 5), np.uint8)
         opened_edges = cv2.morphologyEx(filtered_image, cv2.MORPH_OPEN, kernel_opening)
+
+        cv2.imshow('filtered', opened_edges)
 
         return opened_edges
 

@@ -76,11 +76,6 @@ class Images:
 
 
 def main():
-    path = "ekg.jpeg"
-    img = Images(path)
-    img_name = path.split('\\')[-1].split(".")[0]
-
-    cv2.imshow(img_name, img.img)
     cv2.waitKey()
     cv2.destroyAllWindows()
 

@@ -1,3 +1,5 @@
+import pathlib
+
 import cv2
 import numpy as np
 from PyQt5.QtWidgets import QMainWindow, QLabel, QPushButton, QApplication, QDialog, QWidget, QTextEdit
@@ -10,7 +12,7 @@ class ChangeUI(QDialog):
     def __init__(self):
         super(ChangeUI, self).__init__()
         print("ScaleUI initialized")  # Add this line
-        uic.loadUi("../ui/scale_window.ui", self)
+        uic.loadUi(f"{pathlib.Path(__file__).parent.absolute()}\\..\\ui\\scale_window.ui", self)
 
         self.label_speed = self.findChild(QLabel, "label_speed")
         self.label_volt = self.findChild(QLabel, "label_volt")

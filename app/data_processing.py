@@ -1,7 +1,9 @@
 import numpy as np
 import pandas as pd
+import pyedflib
 from matplotlib import pyplot as plt
 from scipy.interpolate import interp1d
+from datetime import datetime, date
 
 
 class DataProcessing:
@@ -28,14 +30,14 @@ class DataProcessing:
     def mean_chart(self, x, y):
         data = {'x': x, 'y': y}
 
-        # Tworzenie obiektu DataFrame z danymi
         df = pd.DataFrame(data)
 
-        # Obliczenie średniej wartości y dla każdej unikalnej wartości x
         average_y = df.groupby('x')['y'].mean().reset_index()
 
         new_y = np.array(average_y['y'])
         new_x = np.array(average_y['x'])
+
+        print(new_x, new_y)
 
         return new_x, new_y
 
@@ -53,12 +55,64 @@ class DataProcessing:
         return scaled_x, scaled_y
 
     def spline(self, x, y):
-
         x_interp = np.linspace(np.min(x), np.max(x), 250)
-
         y_linear = interp1d(x, y)
 
-        plt.plot(x_interp, y_linear(x_interp), "red")
-        plt.title('Wykres EKG')
+        y_interp = y_linear(x_interp)
+
+        plt.plot(x_interp, y_interp, color='red', marker='o')
+        plt.title('EKG Plot')
         plt.show()
+
+        print('x:', x_interp, 'y:', y_interp)
+
+        return x_interp, y_interp
+
+    def export_to_edf(self, filename, x, y):
+        # Assume self.x and self.y contain your EKG data
+        num_channels = 1  # Number of channels in your EKG data
+        sample_rate = 250  # Adjust this based on your data's sampling rate
+
+        # Create an EdfWriter
+        f = pyedflib.EdfWriter(filename, num_channels, file_type=pyedflib.FILETYPE_EDFPLUS)
+
+        # Set metadata, such as patient information and recording start time
+        f.setStartdatetime(datetime.now())
+
+        ekg_channel_info = {
+            'label': 'ECG',
+            'dimension': 'mV',
+            'sample_frequency': sample_rate,
+            'physical_max': 1,  # Adjust based on your data
+            'physical_min': -1,  # Adjust based on your data
+            'digital_max': 32767,
+            'digital_min': -32768
+        }
+        f.setSignalHeader(edfsignal=0, channel_info=ekg_channel_info)
+        # Write EKG data to the file
+
+        # Convert the EKG data to int16 as required by EDF format
+        #ekg_data = (y * 1e1).astype(np.int16)
+
+        max_original_value = np.max(y)
+        scaled_data = ((y / max_original_value) * 2048)
+
+        # Convert to 16-bit integers
+        ekg_data = np.round(scaled_data).astype(np.int16)
+
+        print('ekgdata', ekg_data)
+
+        print(ekg_data.shape)
+
+
+        ekg_data = ekg_data.reshape((1, -1))
+
+        # Assuming ekg_data is a NumPy array
+        print(ekg_data.shape)
+
+        # Write the data to the file
+        f.writeSamples(ekg_data)
+
+        # Close the EdfWriter
+        f.close()
 

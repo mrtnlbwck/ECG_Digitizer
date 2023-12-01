@@ -9,6 +9,7 @@ class PixelsProcessing:
 
         return pixels
 
+    #nieuzywana
     def process_and_visualize_data(self, coordinates, img, size_threshold=120):
         shape = img.shape
         data = np.zeros(shape, dtype=int)
@@ -28,6 +29,7 @@ class PixelsProcessing:
                 data[labeled_data == label] = 0
 
         new_coordinates = np.argwhere(data)
+
 
 
         return new_coordinates
