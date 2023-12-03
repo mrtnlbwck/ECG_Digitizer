@@ -30,7 +30,7 @@ class Images:
     def rotate_img(self, angle, crop=False, flip=[False, False]):
         self.reset(flip)
         if not crop:
-            self.img = cv2.resize(self.img, (0, 0), fx=0.9, fy=0.9)
+            self.img = cv2.resize(self.img, (0, 0), fx=0.5, fy=0.5)
             w, h = self.img.shape[1], self.img.shape[0]
         else:
             w, h = self.img_width, self.img_height

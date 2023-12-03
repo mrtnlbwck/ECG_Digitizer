@@ -19,7 +19,9 @@ class Adjust(QWidget):
 
         self.img_class, self.update_img, self.base_frame = main.img_class, main.update_img, main.base_frame
         self.rb, self.vbox, self.flip, self.zoom_factor = main.rb, main.vbox, main.flip, main.zoom_factor
-        self.zoom_moment, self.slider, self.gv, self.vbox1 = main.zoom_moment, main.slider, main.gv, main.vbox1
+        self.zoom_moment, self.slider, self.gv, self.vbox1, self.grid, self.hbox2 = main.zoom_moment, main.slider, main.gv, \
+            main.vbox1, main.grid, main.hbox2
+        self.minus_btn, self.plus_btn, self.degrees, self.degrees_label = main.minus_btn, main.plus_btn, main.degrees, main.degrees_label
         self.start_detect = False
 
         self.frame = self.findChild(QFrame, "frame")
@@ -27,13 +29,15 @@ class Adjust(QWidget):
         self.rotate_btn = self.findChild(QPushButton, "rotate_btn")
 
         self.y_btn = self.findChild(QPushButton, "y_btn")
-        self.y_btn.setIconSize(QSize(60, 60))
         self.n_btn = self.findChild(QPushButton, "n_btn")
-        self.n_btn.setIconSize(QSize(60, 60))
 
-        0
+
+
         self.crop_btn.clicked.connect(lambda _: self.click_crop())
         self.rotate_btn.clicked.connect(lambda _: self.click_crop(rotate=True))
+        self.y_btn.clicked.connect(lambda _: self.click_y())
+        self.n_btn.clicked.connect(lambda _: self.click_n())
+
     def click_crop(self, rotate=False):
         def click_y1():
             self.rb.update_dim()
@@ -54,13 +58,18 @@ class Adjust(QWidget):
             self.img_class.img_copy = deepcopy(self.img_class.img)
             self.slider.setParent(None)
             self.slider.valueChanged.disconnect()
+            self.minus_btn.setParent(None)
+            self.plus_btn.setParent(None)
+            self.degrees.setParent(None)
+            self.degrees_label.setParent(None)
+
             crop_frame.frame.setParent(None)
             self.vbox.addWidget(self.frame)
             self.rb.close()
 
         def click_n1():
             if not np.array_equal(img_copy, self.img_class.img):
-                msg = QMessageBox.question(self, "Cancel edits", "Confirm to discard all the changes?   ",
+                msg = QMessageBox.question(self, "Cancel edits", "Confirm to discard all the changes?",
                                            QMessageBox.Yes | QMessageBox.No)
                 if msg != QMessageBox.Yes:
                     return False
@@ -71,9 +80,45 @@ class Adjust(QWidget):
 
             self.slider.setParent(None)
             self.slider.valueChanged.disconnect()
+            self.minus_btn.setParent(None)
+            self.plus_btn.setParent(None)
+            self.degrees.setParent(None)
+            self.degrees_label.setParent(None)
+
             crop_frame.frame.setParent(None)
             self.vbox.addWidget(self.frame)
             self.rb.close()
+
+        def click_minus():
+            self.rotate_value = self.slider.value()
+            self.rotate_value -= 1
+            self.slider.setValue(self.rotate_value)
+
+            self.img_class.rotate_img(self.rotate_value)
+
+            self.rb.setGeometry(int(self.img_class.left * self.zoom_factor), int(self.img_class.top * self.zoom_factor),
+                                int((self.img_class.right - self.img_class.left) * self.zoom_factor),
+                                int((self.img_class.bottom - self.img_class.top) * self.zoom_factor))
+
+            self.rb.update_dim()
+            self.update_img(True)
+            self.degrees.setText(str(self.rotate_value))
+
+
+        def click_plus():
+            self.rotate_value = self.slider.value()
+            self.rotate_value += 1
+            self.slider.setValue(self.rotate_value)
+
+            self.img_class.rotate_img(self.rotate_value)
+
+            self.rb.setGeometry(int(self.img_class.left * self.zoom_factor), int(self.img_class.top * self.zoom_factor),
+                                int((self.img_class.right - self.img_class.left) * self.zoom_factor),
+                                int((self.img_class.bottom - self.img_class.top) * self.zoom_factor))
+
+            self.rb.update_dim()
+            self.update_img(True)
+            self.degrees.setText(str(self.rotate_value))
 
         def change_slide():
             self.rotate_value = self.slider.value()
@@ -87,7 +132,7 @@ class Adjust(QWidget):
 
             self.rb.update_dim()
             self.update_img(True)
-
+            self.degrees.setText(str(self.rotate_value))
 
         crop_frame = Crop()
         crop_frame.n_btn.clicked.connect(click_n1)
@@ -101,7 +146,11 @@ class Adjust(QWidget):
         self.rb = ResizableRubberBand(self)
         self.rb.setGeometry(0, 0, int(self.img_class.img.shape[1] * self.zoom_factor),
                             int(self.img_class.img.shape[0] * self.zoom_factor))
+        self.minus_btn.clicked.connect(click_minus)
+        self.plus_btn.clicked.connect(click_plus)
+
         self.slider.valueChanged.connect(change_slide)
+
 
 
         if not rotate:
@@ -110,6 +159,12 @@ class Adjust(QWidget):
             # crop_frame.rotatect.setParent(None)
         else:
             self.vbox1.insertWidget(1, self.slider)
+            self.grid.addWidget(self.minus_btn)
+            self.grid.addWidget(self.plus_btn)
+
+            self.hbox2.insertWidget(1, self.degrees_label)
+            self.hbox2.insertWidget(1, self.degrees)
+
             self.slider.setRange(0, 360)
             self.slider.setValue(0)
             self.zoom_moment = True
@@ -119,6 +174,7 @@ class Adjust(QWidget):
             self.update_img(True)
 
         img_copy = deepcopy(self.img_class.img)
+
 
 
     def click_y(self):
@@ -140,6 +196,7 @@ class Adjust(QWidget):
         self.img_class.grand_reset()
         self.update_img()
         self.vbox.addWidget(self.base_frame)
+
 
 class Crop(QWidget):
     def __init__(self):
@@ -225,6 +282,7 @@ class ResizableRubberBand(QWidget):
             self.top = 0
             self.move(self.left, 0)
 
+
 class SaveUI(QDialog):
     def __init__(self):
         super().__init__()
@@ -247,13 +305,9 @@ class SaveUI(QDialog):
 
     def click_n(self):
         msg = QMessageBox.question(self, "Cancel edits", "Are you sure you don't want to save the chart?   ",
-                                       QMessageBox.Yes | QMessageBox.No)
-        QMessageBox.setStyleSheet("background{none;}")
+                                   QMessageBox.Yes | QMessageBox.No)
 
         if msg != QMessageBox.Yes:
             return
         else:
             self.close()
-
-
-

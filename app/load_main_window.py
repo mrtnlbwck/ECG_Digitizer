@@ -1,5 +1,4 @@
 import sys
-
 import qimage2ndarray
 from PyQt5.QtGui import QPixmap
 from data_processing import DataProcessing
@@ -46,8 +45,6 @@ class ImageUI(QWidget):
         self.setWindowIcon(QIcon(f"{pathlib.Path(__file__).parent.absolute()}\\..\\icon\\icon.png"))
         self.setWindowTitle("ECG Digitizer")
 
-
-
         self.move(120, 100)
         self.img_list, self.rb = [], None
         for f in files:
@@ -58,6 +55,8 @@ class ImageUI(QWidget):
 
         self.vbox = self.findChild(QVBoxLayout, "vbox")
         self.vbox1 = self.findChild(QVBoxLayout, "vbox1")
+        self.grid = self.findChild(QGridLayout, 'gbox')
+        self.hbox2 = self.findChild(QHBoxLayout, 'hbox_2')
 
         self.base_frame = self.findChild(QFrame, "base_frame")
 
@@ -73,8 +72,22 @@ class ImageUI(QWidget):
         self.save_btn = self.findChild(QPushButton, "back_btn")
         self.save_btn.clicked.connect(self.click_back)
         self.save_btn.clicked.connect(self.close)
+
         self.slider = self.findChild(QSlider, "slider")
         self.slider.setParent(None)
+
+        self.minus_btn = self.findChild(QPushButton, "minus_btn")
+        self.plus_btn = self.findChild(QPushButton, "plus_btn")
+        self.degrees = self.findChild(QLabel, "degrees")
+        self.degrees_label = self.findChild(QLabel, "degrees_label")
+
+        self.minus_btn.setParent(None)
+        self.plus_btn.setParent(None)
+        self.degrees.setParent(None)
+        self.degrees_label.setParent(None)
+
+
+
 
         self.ui = None
         self.main_window = None
@@ -132,14 +145,11 @@ class ImageUI(QWidget):
         QMessageBox.information(self, "Instruction", "Mark two points on the x-axis that form a segment of 5mm, "
                                                      "then two more points on the y-axis  ", QMessageBox.Ok)
 
-
         cv2.imshow("Image", self.img_rgb)
 
         cv2.setMouseCallback("Image", self.on_mouse)
 
         self.hide()
-
-
 
     def click_change(self):
         change_window = ChangeUI()
@@ -150,7 +160,6 @@ class ImageUI(QWidget):
     def open_saving_window(self):
         saving_frame = SaveUI()
         saving_frame.exec()
-
 
     def handle_values_changed(self, speed_value, volt_value):
         self.speed_value = speed_value
@@ -193,6 +202,7 @@ class ImageUI(QWidget):
         return np.sqrt((point2[0] - point1[0]) ** 2 + (point2[1] - point1[1]) ** 2)
 
     def on_mouse(self, event, x, y, flags, params):
+
         if event == cv2.EVENT_LBUTTONDOWN:
             if len(self.reference_points) < 2:
                 self.reference_points.append((x, y))
@@ -210,6 +220,7 @@ class ImageUI(QWidget):
                 self.scale_x = 5 / (pixel_distance_x * self.speed_value)
                 self.scale_y = 5 / (pixel_distance_y * self.volt_value)
 
+
                 self.end_of_clicking = True
 
                 if self.end_of_clicking:
@@ -224,7 +235,6 @@ class ImageUI(QWidget):
                     self.reference_points.clear()
                     self.close()
                     self.open_saving_window()
-
 
         if event == cv2.EVENT_MOUSEMOVE:
             zoom_factor = 3
@@ -252,8 +262,6 @@ class ImageUI(QWidget):
             cv2.putText(zoomed_image, zoomed_text, (10, 30), cv2.FONT_HERSHEY_SIMPLEX, 0.75, (60, 20, 220))
 
             cv2.imshow("Zoomed Image", zoomed_image)
-
-
 
 
 def main():
