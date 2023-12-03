@@ -9,7 +9,7 @@ class Images:
     def __init__(self, img):
         self.img = cv2.imread(img, 1)
         if self.img.shape[0] / self.img.shape[1] < 0.76:
-            self.img_width = 1100
+            self.img_width = 700
             self.img_height = int(self.img_width * self.img.shape[0] / self.img.shape[1])
         else:
             self.img_height = 700
@@ -30,10 +30,12 @@ class Images:
     def rotate_img(self, angle, crop=False, flip=[False, False]):
         self.reset(flip)
         if not crop:
-            self.img = cv2.resize(self.img, (0, 0), fx=0.5, fy=0.5)
+            self.img = cv2.resize(self.img, (0, 0), fx=0.9, fy=0.9)
             w, h = self.img.shape[1], self.img.shape[0]
         else:
             w, h = self.img_width, self.img_height
+
+
 
         self.img = ndimage.rotate(self.img, angle)
 
@@ -57,9 +59,6 @@ class Images:
         self.left, self.right, self.top, self.bottom = int(midpoint[0] - half_w), int(midpoint[0] + half_w), \
             int(midpoint[1] - half_h), int(midpoint[1] + half_h)
 
-    def change_b_c(self, alpha=1, beta=0):
-        # contrast from 0 to 3, brightness from -100 to 100
-        self.img = cv2.convertScaleAbs(self.img, alpha=alpha, beta=beta)
 
     def reset(self, flip=None):
         if flip is None:

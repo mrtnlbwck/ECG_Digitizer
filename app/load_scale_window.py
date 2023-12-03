@@ -1,7 +1,7 @@
 import pathlib
 
-import cv2
 import numpy as np
+from PyQt5.QtGui import QIcon
 from PyQt5.QtWidgets import QMainWindow, QLabel, QPushButton, QApplication, QDialog, QWidget, QTextEdit
 from PyQt5 import uic, QtWidgets, QtCore
 import sys
@@ -14,6 +14,8 @@ class ChangeUI(QDialog):
         super(ChangeUI, self).__init__()
         print("ScaleUI initialized")  # Add this line
         uic.loadUi(f"{pathlib.Path(__file__).parent.absolute()}\\..\\ui\\scale_window.ui", self)
+        self.setWindowIcon(QIcon(f"{pathlib.Path(__file__).parent.absolute()}\\..\\icon\\icon.png"))
+        self.setWindowTitle("Enter ECG paper values")
 
         self.label_speed = self.findChild(QLabel, "label_speed")
         self.label_volt = self.findChild(QLabel, "label_volt")
@@ -35,6 +37,8 @@ class ChangeUI(QDialog):
         self.valuesChanged.emit(self.speed_value, self.volt_value)
 
         self.close()
+
+
 
 
 if __name__ == "__main__":

@@ -37,7 +37,8 @@ class DataProcessing:
         new_y = np.array(average_y['y'])
         new_x = np.array(average_y['x'])
 
-        print(new_x, new_y)
+
+
 
         return new_x, new_y
 
@@ -64,55 +65,63 @@ class DataProcessing:
         plt.title('EKG Plot')
         plt.show()
 
-        print('x:', x_interp, 'y:', y_interp)
-
         return x_interp, y_interp
 
+
     def export_to_edf(self, filename, x, y):
-        # Assume self.x and self.y contain your EKG data
         num_channels = 1  # Number of channels in your EKG data
         sample_rate = 250  # Adjust this based on your data's sampling rate
 
         # Create an EdfWriter
         f = pyedflib.EdfWriter(filename, num_channels, file_type=pyedflib.FILETYPE_EDFPLUS)
 
-        # Set metadata, such as patient information and recording start time
-        f.setStartdatetime(datetime.now())
+        try:
+            # Set metadata, such as patient information and recording start time
+            f.setStartdatetime(datetime.now())
 
-        ekg_channel_info = {
-            'label': 'ECG',
-            'dimension': 'mV',
-            'sample_frequency': sample_rate,
-            'physical_max': 1,  # Adjust based on your data
-            'physical_min': -1,  # Adjust based on your data
-            'digital_max': 32767,
-            'digital_min': -32768
-        }
-        f.setSignalHeader(edfsignal=0, channel_info=ekg_channel_info)
-        # Write EKG data to the file
+            ekg_channel_info = {
+                'label': 'ECG',
+                'dimension': 'mV',
+                'sample_frequency': sample_rate,
+                'physical_max': 1,  # Adjust based on your data
+                'physical_min': -1,  # Adjust based on your data
+                'digital_max': 32767,
+                'digital_min': -32768
+            }
 
-        # Convert the EKG data to int16 as required by EDF format
-        #ekg_data = (y * 1e1).astype(np.int16)
+            # Set additional parameters for each channel if needed
+            # ekg_channel_info_2 = {...}
+            # f.setSignalHeader(edfsignal=1, channel_info=ekg_channel_info_2)
 
-        max_original_value = np.max(y)
-        scaled_data = ((y / max_original_value) * 2048)
+            # Set the signal headers for all channels
+            for channel_num in range(num_channels):
+                f.setSignalHeader(edfsignal=channel_num, channel_info=ekg_channel_info)
 
-        # Convert to 16-bit integers
-        ekg_data = np.round(scaled_data).astype(np.int16)
+            # Write EKG data to the file
 
-        print('ekgdata', ekg_data)
+            # Convert the EKG data to int16 as required by EDF format
+            #ekg_data = (y*2048).astype(np.int16)
+            #
+            # # Print information about the data
+            # print('ekgdata', ekg_data)
+            # print(ekg_data.shape)
+            #
+            # # Reshape the data if needed
+            # ekg_data = ekg_data.reshape((1, -1))
 
-        print(ekg_data.shape)
+            data = np.column_stack((x, y))
+            data = data.reshape((1,-1))
 
+            # Assuming ekg_data is a NumPy array
+            # print(ekg_data.shape)
+            #
+            # ekg_data = ekg_data/1000
+            #
+            # # Write the data to the file
+            # f.writeSamples(ekg_data)
+            f.writePhysicalSamples(data)
 
-        ekg_data = ekg_data.reshape((1, -1))
-
-        # Assuming ekg_data is a NumPy array
-        print(ekg_data.shape)
-
-        # Write the data to the file
-        f.writeSamples(ekg_data)
-
-        # Close the EdfWriter
-        f.close()
+        finally:
+            # Close the EdfWriter in a finally block to ensure it is closed even if an exception occurs
+            f.close()
 

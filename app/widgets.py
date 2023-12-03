@@ -1,4 +1,5 @@
 import pathlib
+import sys
 from copy import deepcopy
 
 import cv2
@@ -7,6 +8,8 @@ from PyQt5 import uic
 from PyQt5.QtGui import *
 from PyQt5.QtCore import *
 from PyQt5.QtWidgets import *
+from PyQt5.uic.properties import QtWidgets
+
 
 class Adjust(QWidget):
     def __init__(self, main):
@@ -28,8 +31,7 @@ class Adjust(QWidget):
         self.n_btn = self.findChild(QPushButton, "n_btn")
         self.n_btn.setIconSize(QSize(60, 60))
 
-        self.y_btn.clicked.connect(lambda _: self.click_y())
-        self.n_btn.clicked.connect(lambda _: self.click_n())
+        0
         self.crop_btn.clicked.connect(lambda _: self.click_crop())
         self.rotate_btn.clicked.connect(lambda _: self.click_crop(rotate=True))
     def click_crop(self, rotate=False):
@@ -99,14 +101,13 @@ class Adjust(QWidget):
         self.rb = ResizableRubberBand(self)
         self.rb.setGeometry(0, 0, int(self.img_class.img.shape[1] * self.zoom_factor),
                             int(self.img_class.img.shape[0] * self.zoom_factor))
-        self.img_class.change_b_c(beta=-40)
         self.slider.valueChanged.connect(change_slide)
 
 
         if not rotate:
             self.update_img()
-            crop_frame.rotate.setParent(None)
-            crop_frame.rotatect.setParent(None)
+            # crop_frame.rotate.setParent(None)
+            # crop_frame.rotatect.setParent(None)
         else:
             self.vbox1.insertWidget(1, self.slider)
             self.slider.setRange(0, 360)
@@ -147,9 +148,7 @@ class Crop(QWidget):
 
         self.frame = self.findChild(QFrame, "frame")
         self.y_btn = self.findChild(QPushButton, "y_btn")
-        self.y_btn.setIconSize(QSize(70, 70))
         self.n_btn = self.findChild(QPushButton, "n_btn")
-        self.n_btn.setIconSize(QSize(70, 70))
 
 
 class ResizableRubberBand(QWidget):
@@ -225,6 +224,36 @@ class ResizableRubberBand(QWidget):
         if self.top < 0:
             self.top = 0
             self.move(self.left, 0)
+
+class SaveUI(QDialog):
+    def __init__(self):
+        super().__init__()
+        uic.loadUi(f"{pathlib.Path(__file__).parent.absolute()}\\..\\ui\\saving_window.ui", self)
+        self.setWindowTitle("Save ECG")
+        self.show()
+        self.move(100, 100)
+
+        self.new_btn = self.findChild(QRadioButton, "new_btn")
+        self.ex_btn = self.findChild(QRadioButton, "ex_btn")
+        self.sub_btn = self.findChild(QPushButton, "sub_btn")
+        self.sub_btn.clicked.connect(self.click_sub)
+        self.dont_btn = self.findChild(QPushButton, "dont_btn")
+        self.dont_btn.clicked.connect(self.click_n)
+        self.header_text = self.findChild(QTextEdit, "header_text")
+        self.value_text = self.findChild(QTextEdit, "value_text")
+
+    def click_sub(self):
+        print("smile")
+
+    def click_n(self):
+        msg = QMessageBox.question(self, "Cancel edits", "Are you sure you don't want to save the chart?   ",
+                                       QMessageBox.Yes | QMessageBox.No)
+        QMessageBox.setStyleSheet("background{none;}")
+
+        if msg != QMessageBox.Yes:
+            return
+        else:
+            self.close()
 
 
 

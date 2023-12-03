@@ -1,7 +1,7 @@
 import sys
 
 import qimage2ndarray
-from PyQt5 import QtCore, QtWidgets
+from PyQt5.QtGui import QPixmap
 from data_processing import DataProcessing
 from load_scale_window import ChangeUI
 from pixels_processing import PixelsProcessing
@@ -17,13 +17,9 @@ class UI(QMainWindow):
 
         self.files = None
         uic.loadUi(f"{pathlib.Path(__file__).parent.absolute()}\\..\\ui\\main_window.ui", self)
+        self.setWindowIcon(QIcon(f"{pathlib.Path(__file__).parent.absolute()}\\..\\icon\\icon.png"))
+        self.setWindowTitle("ECG Digitizer")
 
-
-
-
-
-
-        self.label = self.findChild(QLabel, "label")
         self.button = self.findChild(QPushButton, "pushButton")
         self.button.clicked.connect(self.click)
         self.image = None
@@ -47,13 +43,21 @@ class ImageUI(QWidget):
         super(ImageUI, self).__init__()
 
         uic.loadUi(f"{pathlib.Path(__file__).parent.absolute()}\\..\\ui\\image_window.ui", self)
+        self.setWindowIcon(QIcon(f"{pathlib.Path(__file__).parent.absolute()}\\..\\icon\\icon.png"))
+        self.setWindowTitle("ECG Digitizer")
 
+
+
+        self.move(120, 100)
         self.img_list, self.rb = [], None
         for f in files:
             self.img_list.append(Images(f))
         self.img_id = 0
         self.img_class = self.img_list[self.img_id]
         self.img = QPixmap(qimage2ndarray.array2qimage(cv2.cvtColor(self.img_class.img, cv2.COLOR_BGR2RGB)))
+
+        self.vbox = self.findChild(QVBoxLayout, "vbox")
+        self.vbox1 = self.findChild(QVBoxLayout, "vbox1")
 
         self.base_frame = self.findChild(QFrame, "base_frame")
 
@@ -70,6 +74,7 @@ class ImageUI(QWidget):
         self.save_btn.clicked.connect(self.click_back)
         self.save_btn.clicked.connect(self.close)
         self.slider = self.findChild(QSlider, "slider")
+        self.slider.setParent(None)
 
         self.ui = None
         self.main_window = None
@@ -124,25 +129,28 @@ class ImageUI(QWidget):
         self.img_gray, self.img_rgb = self.image_processor.color_change_chart(self.saved_image)
         self.chart_after_filter = self.image_processor.filtering(self.img_gray)
 
-        instruction_text1 = "Mark two points on the x-axis that form a segment of 5mm,"
-        instruction_text2 = "then two more points on the y-axis"
+        QMessageBox.information(self, "Instruction", "Mark two points on the x-axis that form a segment of 5mm, "
+                                                     "then two more points on the y-axis  ", QMessageBox.Ok)
 
 
-        cv2.putText(self.img_rgb, instruction_text1, (10, 30), cv2.FONT_HERSHEY_SIMPLEX, 0.8, (60, 20, 220),
-                    2)
-        cv2.putText(self.img_rgb, instruction_text2, (10, 55), cv2.FONT_HERSHEY_SIMPLEX, 0.8, (60,20, 220),
-                    2)
         cv2.imshow("Image", self.img_rgb)
-
 
         cv2.setMouseCallback("Image", self.on_mouse)
 
+        self.hide()
+
+
+
     def click_change(self):
         change_window = ChangeUI()
-        change_window.setWindowTitle("Enter ECG paper values")
         change_window.valuesChanged.connect(self.handle_values_changed)
 
         change_window.exec()
+
+    def open_saving_window(self):
+        saving_frame = SaveUI()
+        saving_frame.exec()
+
 
     def handle_values_changed(self, speed_value, volt_value):
         self.speed_value = speed_value
@@ -213,8 +221,10 @@ class ImageUI(QWidget):
                     scaled_xy = self.data_processor.scale(*xy, self.scale_x, self.scale_y)
                     mean_xy = self.data_processor.mean_chart(*scaled_xy)
                     spline_xy = self.data_processor.spline(*mean_xy)
-                    self.data_processor.export_to_edf("data.edf", *spline_xy)
                     self.reference_points.clear()
+                    self.close()
+                    self.open_saving_window()
+
 
         if event == cv2.EVENT_MOUSEMOVE:
             zoom_factor = 3
@@ -242,6 +252,8 @@ class ImageUI(QWidget):
             cv2.putText(zoomed_image, zoomed_text, (10, 30), cv2.FONT_HERSHEY_SIMPLEX, 0.75, (60, 20, 220))
 
             cv2.imshow("Zoomed Image", zoomed_image)
+
+
 
 
 def main():

@@ -7,6 +7,7 @@ class PixelsProcessing:
 
         pixels = np.argwhere(chart_after_filter == 0)
 
+
         return pixels
 
     #nieuzywana
