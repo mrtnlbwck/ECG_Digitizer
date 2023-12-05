@@ -1,0 +1,27 @@
+<RCC>
+  <qresource prefix="Images">
+    <file>Images/blank.png</file>
+    <file>Images/ekg-1.png</file>
+    <file>Images/main_background.png</file>
+    <file>Images/scale_background.png</file>
+    <file>Images/save.png</file>
+    <file>Images/saving_window.png</file>
+    <file>Images/title.png</file>
+  </qresource>
+  <qresource prefix="Fonts">
+    <file>Fonts/Open_Sans/OpenSans-Italic-VariableFont_wdth,wght.ttf</file>
+    <file>Fonts/Open_Sans/OpenSans-VariableFont_wdth,wght.ttf</file>
+  </qresource>
+  <qresource prefix="Icons">
+    <file>Icons/adjust.png</file>
+    <file>Icons/back.png</file>
+    <file>Icons/change.png</file>
+    <file>Icons/crop.png</file>
+    <file>Icons/next.png</file>
+    <file>Icons/no.png</file>
+    <file>Icons/rotate.png</file>
+    <file>Icons/Submit.png</file>
+    <file>Icons/Upload.png</file>
+    <file>Icons/yes.png</file>
+  </qresource>
+</RCC>

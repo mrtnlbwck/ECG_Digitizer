@@ -1,4 +1,3 @@
-import sys
 import qimage2ndarray
 from PyQt5.QtGui import QPixmap
 from data_processing import DataProcessing
@@ -44,6 +43,7 @@ class ImageUI(QWidget):
         uic.loadUi(f"{pathlib.Path(__file__).parent.absolute()}\\..\\ui\\image_window.ui", self)
         self.setWindowIcon(QIcon(f"{pathlib.Path(__file__).parent.absolute()}\\..\\icon\\icon.png"))
         self.setWindowTitle("ECG Digitizer")
+        self.files = files
 
         self.move(120, 100)
         self.img_list, self.rb = [], None
@@ -63,15 +63,15 @@ class ImageUI(QWidget):
         self.adjust_btn = self.findChild(QPushButton, "adjust_btn")
         self.adjust_btn.clicked.connect(self.adjust_frame)
 
-        self.save_btn = self.findChild(QPushButton, "save_btn")
-        self.save_btn.clicked.connect(self.click_con)
+        self.next_btn = self.findChild(QPushButton, "next_btn")
+        self.next_btn.clicked.connect(self.click_next)
 
         self.change_btn = self.findChild(QPushButton, "change_btn")
         self.change_btn.clicked.connect(self.click_change)
 
-        self.save_btn = self.findChild(QPushButton, "back_btn")
-        self.save_btn.clicked.connect(self.click_back)
-        self.save_btn.clicked.connect(self.close)
+        self.back_btn = self.findChild(QPushButton, "back_btn")
+        self.back_btn.clicked.connect(self.click_back)
+        self.back_btn.clicked.connect(self.close)
 
         self.slider = self.findChild(QSlider, "slider")
         self.slider.setParent(None)
@@ -85,9 +85,6 @@ class ImageUI(QWidget):
         self.plus_btn.setParent(None)
         self.degrees.setParent(None)
         self.degrees_label.setParent(None)
-
-
-
 
         self.ui = None
         self.main_window = None
@@ -137,8 +134,8 @@ class ImageUI(QWidget):
         self.base_frame.setParent(None)
         self.vbox.addWidget(adjust_frame.frame)
 
-    def click_con(self):
-        self.saved_image = self.img_class.img  # Zapisz obraz do zmiennej
+    def click_next(self):
+        self.saved_image = self.img_class.img
         self.img_gray, self.img_rgb = self.image_processor.color_change_chart(self.saved_image)
         self.chart_after_filter = self.image_processor.filtering(self.img_gray)
 
@@ -157,8 +154,8 @@ class ImageUI(QWidget):
 
         change_window.exec()
 
-    def open_saving_window(self):
-        saving_frame = SaveUI()
+    def open_saving_window(self, spline_x, spline_y):
+        saving_frame = SaveUI(spline_x, spline_y)
         saving_frame.exec()
 
     def handle_values_changed(self, speed_value, volt_value):
@@ -232,25 +229,23 @@ class ImageUI(QWidget):
                     scaled_xy = self.data_processor.scale(*xy, self.scale_x, self.scale_y)
                     mean_xy = self.data_processor.mean_chart(*scaled_xy)
                     spline_xy = self.data_processor.spline(*mean_xy)
+                    spline_x, spline_y = self.data_processor.spline_with_additional_points(*spline_xy)
+
                     self.reference_points.clear()
-                    self.close()
-                    self.open_saving_window()
+                    self.hide()
+                    self.open_saving_window(spline_x, spline_y)
 
         if event == cv2.EVENT_MOUSEMOVE:
             zoom_factor = 3
-            zoomed_size = 80  # Adjust this size based on your preference
+            zoomed_size = 80
 
-            # Calculate the region to crop from the original image
             crop_y_start = max(0, y - zoomed_size)
             crop_y_end = min(self.img_rgb.shape[0], y + zoomed_size)
             crop_x_start = max(0, x - zoomed_size)
             crop_x_end = min(self.img_rgb.shape[1], x + zoomed_size)
 
-            # Adjust the cursor position in the zoomed image
             cursor_x = x - crop_x_start
             cursor_y = y - crop_y_start
-
-            # Crop the region from the original image
 
             zoomed_image = self.img_rgb[crop_y_start:crop_y_end, crop_x_start:crop_x_end]
             zoomed_image = cv2.resize(zoomed_image, None, fx=zoom_factor, fy=zoom_factor)

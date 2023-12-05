@@ -1,10 +1,7 @@
 import pathlib
-
-import numpy as np
 from PyQt5.QtCore import QRegExp
-from PyQt5.QtGui import QIcon, QIntValidator, QRegExpValidator
-from PyQt5.QtWidgets import QMainWindow, QLabel, QPushButton, QApplication, QDialog, QWidget, QTextEdit, QMessageBox, \
-    QLineEdit
+from PyQt5.QtGui import QIcon, QRegExpValidator
+from PyQt5.QtWidgets import QLabel, QPushButton, QDialog, QMessageBox, QLineEdit
 from PyQt5 import uic, QtWidgets, QtCore
 import sys
 

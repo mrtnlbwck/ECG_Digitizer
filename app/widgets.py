@@ -10,6 +10,9 @@ from PyQt5.QtCore import *
 from PyQt5.QtWidgets import *
 from PyQt5.uic.properties import QtWidgets
 
+from app.data_processing import DataProcessing
+from app.load_main_window import ImageUI
+
 
 class Adjust(QWidget):
     def __init__(self, main):
@@ -30,8 +33,6 @@ class Adjust(QWidget):
 
         self.y_btn = self.findChild(QPushButton, "y_btn")
         self.n_btn = self.findChild(QPushButton, "n_btn")
-
-
 
         self.crop_btn.clicked.connect(lambda _: self.click_crop())
         self.rotate_btn.clicked.connect(lambda _: self.click_crop(rotate=True))
@@ -104,7 +105,6 @@ class Adjust(QWidget):
             self.update_img(True)
             self.degrees.setText(str(self.rotate_value))
 
-
         def click_plus():
             self.rotate_value = self.slider.value()
             self.rotate_value += 1
@@ -151,12 +151,8 @@ class Adjust(QWidget):
 
         self.slider.valueChanged.connect(change_slide)
 
-
-
         if not rotate:
             self.update_img()
-            # crop_frame.rotate.setParent(None)
-            # crop_frame.rotatect.setParent(None)
         else:
             self.vbox1.insertWidget(1, self.slider)
             self.grid.addWidget(self.minus_btn)
@@ -174,8 +170,6 @@ class Adjust(QWidget):
             self.update_img(True)
 
         img_copy = deepcopy(self.img_class.img)
-
-
 
     def click_y(self):
         self.start_detect = False
@@ -207,6 +201,41 @@ class Crop(QWidget):
         self.y_btn = self.findChild(QPushButton, "y_btn")
         self.n_btn = self.findChild(QPushButton, "n_btn")
 
+class SaveUI(QDialog):
+    def __init__(self, spline_x, spline_y):
+        super().__init__()
+        uic.loadUi(f"{pathlib.Path(__file__).parent.absolute()}\\..\\ui\\saving_window.ui", self)
+        self.spline_x, self.spline_y = spline_x, spline_y
+        self.title = self.findChild(QLineEdit, "title")
+        self.title_edf = ''
+        self.setWindowTitle("Save ECG")
+        self.show()
+        self.sub_btn = self.findChild(QPushButton, "sub_btn")
+        self.sub_btn.clicked.connect(self.click_sub)
+        self.dont_btn = self.findChild(QPushButton, "dont_btn")
+        self.dont_btn.clicked.connect(self.click_n)
+        self.header_text = self.findChild(QLineEdit, "header_text")
+
+        self.data_processor = DataProcessing()
+
+    def click_sub(self):
+        if self.header_text.text() == '' or self.title.text() == '':
+            QMessageBox.warning(self, "Enter both values", "Please enter both values", QMessageBox.Ok)
+        else:
+            self.header_text_str = str(self.header_text.text())
+            self.title_edf = str(self.title.text()) + ".edf"
+            self.data_processor.export_to_edf(self.title_edf, self.header_text_str, self.spline_x, self.spline_y)
+            self.close()
+
+
+    def click_n(self):
+        msg = QMessageBox.question(self, "Cancel edits", "Are you sure you don't want to save the chart?   ",
+                                   QMessageBox.Yes | QMessageBox.No)
+
+        if msg != QMessageBox.Yes:
+            return
+        else:
+            self.close()
 
 class ResizableRubberBand(QWidget):
     def __init__(self, main):
@@ -283,31 +312,4 @@ class ResizableRubberBand(QWidget):
             self.move(self.left, 0)
 
 
-class SaveUI(QDialog):
-    def __init__(self):
-        super().__init__()
-        uic.loadUi(f"{pathlib.Path(__file__).parent.absolute()}\\..\\ui\\saving_window.ui", self)
-        self.setWindowTitle("Save ECG")
-        self.show()
-        self.move(100, 100)
 
-        self.new_btn = self.findChild(QRadioButton, "new_btn")
-        self.ex_btn = self.findChild(QRadioButton, "ex_btn")
-        self.sub_btn = self.findChild(QPushButton, "sub_btn")
-        self.sub_btn.clicked.connect(self.click_sub)
-        self.dont_btn = self.findChild(QPushButton, "dont_btn")
-        self.dont_btn.clicked.connect(self.click_n)
-        self.header_text = self.findChild(QTextEdit, "header_text")
-        self.value_text = self.findChild(QTextEdit, "value_text")
-
-    def click_sub(self):
-        print("smile")
-
-    def click_n(self):
-        msg = QMessageBox.question(self, "Cancel edits", "Are you sure you don't want to save the chart?   ",
-                                   QMessageBox.Yes | QMessageBox.No)
-
-        if msg != QMessageBox.Yes:
-            return
-        else:
-            self.close()

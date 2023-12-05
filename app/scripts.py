@@ -35,8 +35,6 @@ class Images:
         else:
             w, h = self.img_width, self.img_height
 
-
-
         self.img = ndimage.rotate(self.img, angle)
 
         angle = math.radians(angle)
@@ -58,7 +56,6 @@ class Images:
         half_w, half_h = wr // 2, hr // 2
         self.left, self.right, self.top, self.bottom = int(midpoint[0] - half_w), int(midpoint[0] + half_w), \
             int(midpoint[1] - half_h), int(midpoint[1] + half_h)
-
 
     def reset(self, flip=None):
         if flip is None:
