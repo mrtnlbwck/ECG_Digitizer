@@ -1,5 +1,9 @@
+import csv
+
 import qimage2ndarray
 from PyQt5.QtGui import QPixmap
+from matplotlib import pyplot as plt
+
 from data_processing import DataProcessing
 from load_scale_window import ChangeUI
 from pixels_processing import PixelsProcessing
@@ -40,10 +44,11 @@ class ImageUI(QWidget):
     def __init__(self, files):
         super(ImageUI, self).__init__()
 
+        self.charts = None
         uic.loadUi(f"{pathlib.Path(__file__).parent.absolute()}\\..\\ui\\image_window.ui", self)
         self.setWindowIcon(QIcon(f"{pathlib.Path(__file__).parent.absolute()}\\..\\icon\\icon.png"))
         self.setWindowTitle("ECG Digitizer")
-        self.files = files
+
 
         self.move(120, 100)
         self.img_list, self.rb = [], None
@@ -52,7 +57,7 @@ class ImageUI(QWidget):
         self.img_id = 0
         self.img_class = self.img_list[self.img_id]
         self.img = QPixmap(qimage2ndarray.array2qimage(cv2.cvtColor(self.img_class.img, cv2.COLOR_BGR2RGB)))
-
+        self.path = files
         self.vbox = self.findChild(QVBoxLayout, "vbox")
         self.vbox1 = self.findChild(QVBoxLayout, "vbox1")
         self.grid = self.findChild(QGridLayout, 'gbox')
@@ -117,6 +122,7 @@ class ImageUI(QWidget):
         self.speed_value = 25
         self.volt_value = 10
 
+
     def update_img(self, movable=False):
         self.img = QPixmap(qimage2ndarray.array2qimage(cv2.cvtColor(self.img_class.img, cv2.COLOR_BGR2RGB)))
         self.scene.removeItem(self.scene_img)
@@ -135,16 +141,22 @@ class ImageUI(QWidget):
         self.vbox.addWidget(adjust_frame.frame)
 
     def click_next(self):
-        self.saved_image = self.img_class.img
-        self.img_gray, self.img_rgb = self.image_processor.color_change_chart(self.saved_image)
-        self.chart_after_filter = self.image_processor.filtering(self.img_gray)
 
         QMessageBox.information(self, "Instruction", "Mark two points on the x-axis that form a segment of 5mm, "
                                                      "then two more points on the y-axis  ", QMessageBox.Ok)
 
-        cv2.imshow("Image", self.img_rgb)
+        cv2.imshow("Image", self.img_class.img)
+
 
         cv2.setMouseCallback("Image", self.on_mouse)
+
+        dog_image = self.image_processor.difference_of_gaussians(self.img_class.img)
+        mean_image = self.image_processor.mean_image(dog_image)
+        binary_image = self.image_processor.imthreshold(mean_image)
+        result_multiply = self.image_processor.multiply(dog_image, binary_image)
+        medians = self.image_processor.dividing(result_multiply)
+        self.charts = self.image_processor.cropping(medians, result_multiply)
+        # self.image_processor.plot_cropped_charts(self.charts)
 
         self.hide()
 
@@ -154,8 +166,8 @@ class ImageUI(QWidget):
 
         change_window.exec()
 
-    def open_saving_window(self, spline_x, spline_y):
-        saving_frame = SaveUI(spline_x, spline_y)
+    def open_saving_window(self, all_spline_y, sample):
+        saving_frame = SaveUI(all_spline_y, sample)
         saving_frame.exec()
 
     def handle_values_changed(self, speed_value, volt_value):
@@ -203,12 +215,12 @@ class ImageUI(QWidget):
         if event == cv2.EVENT_LBUTTONDOWN:
             if len(self.reference_points) < 2:
                 self.reference_points.append((x, y))
-                cv2.circle(self.img_rgb, (x, y), 2, (0, 0, 255), -1)
-                cv2.putText(self.img_rgb, 'x', (x, y), cv2.FONT_HERSHEY_SIMPLEX, 0.6, (0, 0, 0), 2)
+                cv2.circle(self.img_class.img, (x, y), 2, (0, 0, 255), -1)
+                cv2.putText(self.img_class.img, 'x', (x, y), cv2.FONT_HERSHEY_SIMPLEX, 0.6, (0, 0, 0), 2)
             elif len(self.reference_points) < 4:
                 self.reference_points.append((x, y))
-                cv2.circle(self.img_rgb, (x, y), 2, (255, 0, 0), -1)
-                cv2.putText(self.img_rgb, 'y', (x, y), cv2.FONT_HERSHEY_SIMPLEX, 0.6, (0, 0, 0), 2)
+                cv2.circle(self.img_class.img, (x, y), 2, (255, 0, 0), -1)
+                cv2.putText(self.img_class.img, 'y', (x, y), cv2.FONT_HERSHEY_SIMPLEX, 0.6, (0, 0, 0), 2)
 
             if len(self.reference_points) == 4:
                 cv2.waitKey(500)
@@ -217,37 +229,53 @@ class ImageUI(QWidget):
                 self.scale_x = 5 / (pixel_distance_x * self.speed_value)
                 self.scale_y = 5 / (pixel_distance_y * self.volt_value)
 
-
                 self.end_of_clicking = True
 
                 if self.end_of_clicking:
                     cv2.destroyAllWindows()
 
-                    pixels = self.pixels_processor.put_into_pixels(self.chart_after_filter)
-                    sorted_data = self.data_processor.sorting(pixels)
-                    xy = self.data_processor.extract_xy(sorted_data)
-                    scaled_xy = self.data_processor.scale(*xy, self.scale_x, self.scale_y)
-                    mean_xy = self.data_processor.mean_chart(*scaled_xy)
-                    spline_xy = self.data_processor.spline(*mean_xy)
-                    spline_x, spline_y = self.data_processor.spline_with_additional_points(*spline_xy)
+                    all_spline_x = []
+                    all_spline_y = []
+                    sample_rates =[]
+
+                    if self.charts is not None:
+                        for chart in self.charts:
+                            pixels = self.pixels_processor.put_into_pixels(chart)
+                            sorted_data = self.data_processor.sorting(pixels)
+                            xy = self.data_processor.extract_xy(sorted_data)
+                            scaled_xy = self.data_processor.scale(*xy, self.scale_x, self.scale_y)
+                            mean_xy = self.data_processor.mean_chart(*scaled_xy)
+                            spline_xy = self.data_processor.spline(*mean_xy)
+                            spline_x, spline_y = self.data_processor.spline_with_additional_points(*spline_xy)
+                            sample_rate = int(1 / np.mean(np.diff(spline_x)))
+
+                            all_spline_x.append(spline_x)
+                            all_spline_y.append(spline_y)
+                            sample_rates.append(sample_rate)
+
+                    else:
+                        print("Warning: self.charts is None. Check for proper initialization.")
+
+                    sample_rate_final = int(np.mean(sample_rates))
 
                     self.reference_points.clear()
                     self.hide()
-                    self.open_saving_window(spline_x, spline_y)
+                    self.open_saving_window(all_spline_y, sample_rate_final)
+
 
         if event == cv2.EVENT_MOUSEMOVE:
             zoom_factor = 3
             zoomed_size = 80
 
             crop_y_start = max(0, y - zoomed_size)
-            crop_y_end = min(self.img_rgb.shape[0], y + zoomed_size)
+            crop_y_end = min(self.img_class.img.shape[0], y + zoomed_size)
             crop_x_start = max(0, x - zoomed_size)
-            crop_x_end = min(self.img_rgb.shape[1], x + zoomed_size)
+            crop_x_end = min(self.img_class.img.shape[1], x + zoomed_size)
 
             cursor_x = x - crop_x_start
             cursor_y = y - crop_y_start
 
-            zoomed_image = self.img_rgb[crop_y_start:crop_y_end, crop_x_start:crop_x_end]
+            zoomed_image = self.img_class.img[crop_y_start:crop_y_end, crop_x_start:crop_x_end]
             zoomed_image = cv2.resize(zoomed_image, None, fx=zoom_factor, fy=zoom_factor)
 
             cursor_color = (0, 255, 0)  # Green color for cursor

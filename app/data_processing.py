@@ -7,7 +7,6 @@ import pyedflib
 from datetime import datetime, date
 
 
-
 class DataProcessing:
     def sorting(self, data):
         swapped_data = [[y, x] for x, y in data]
@@ -63,8 +62,6 @@ class DataProcessing:
 
         y_interp = y_linear(x_interp)
 
-        print('xs', x_interp, 'ys', y_interp)
-
         return x_interp, y_interp
 
     def spline_with_additional_points(self, x, y, additional_points=5000):
@@ -73,42 +70,43 @@ class DataProcessing:
 
         y_interp = y_linear(x_interp)
 
-        plt.plot(x_interp, y_interp, color='red', marker='o')
-        plt.title('EKG Plot')
-        plt.xlabel('Time [s]')
-        plt.ylabel('Voltage [mV]')
-        plt.show()
+        # plt.plot(x_interp, y_interp, color='red', marker='o')
+        # plt.title('EKG Plot')
+        # plt.xlabel('Time [s]')
+        # plt.ylabel('Voltage [mV]')
+        # plt.show()
 
         return x_interp, y_interp
 
-    def export_to_edf(self, filename, header, x, y):
-        num_channels = 1
-        sample_rate = int(1 / np.mean(np.diff(x)))
+    # def export_to_edf(self, filename, header, x, y):
+    #     num_channels = len(x)
+    #     # print(x[0])
+    #     # sample_rate = int(1 / np.mean(np.diff(x[0])))
+    #     sample_rate = 38
+    #
+    #     f = pyedflib.EdfWriter(filename, num_channels, file_type=FILETYPE_EDFPLUS)
+    #
+    #     try:
+    #         f.setStartdatetime(datetime.now())
+    #
+    #         ekg_channel_info = {
+    #             'label': header,
+    #             'dimension': 'mV',
+    #             'sample_frequency': sample_rate,
+    #             # 'physical_max': round(max(y[0]), 6),
+    #             # 'physical_min': round(min(y[0]), 6)
+    #         }
+    #
+    #         for channel_num in range(num_channels):
+    #             f.setSignalHeader(edfsignal=channel_num, channel_info=ekg_channel_info)
+    #
+    #         ekg_data = y
+    #         # ekg_data = ekg_data.reshape((1, -1))
+    #
+    #         f.writeSamples(ekg_data)
+    #
+    #     finally:
+    #         f.close()
 
-
-        f = pyedflib.EdfWriter(filename, num_channels, file_type=FILETYPE_EDFPLUS)
-
-        try:
-            f.setStartdatetime(datetime.now())
-
-
-            ekg_channel_info = {
-                'label': header,
-                'dimension': 'mV',
-                'sample_frequency': sample_rate,
-                'physical_max': round(max(y), 6),
-                'physical_min': round(min(y), 6)
-            }
-
-            for channel_num in range(num_channels):
-                f.setSignalHeader(edfsignal=channel_num, channel_info=ekg_channel_info)
-
-            ekg_data = y
-            ekg_data = ekg_data.reshape((1, -1))
-
-            f.writeSamples(ekg_data)
-
-        finally:
-            f.close()
 
 

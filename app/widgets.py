@@ -11,6 +11,7 @@ from PyQt5.QtWidgets import *
 from PyQt5.uic.properties import QtWidgets
 
 from app.data_processing import DataProcessing
+from app.data_saving import DataSaving
 from app.load_main_window import ImageUI
 
 
@@ -202,10 +203,10 @@ class Crop(QWidget):
         self.n_btn = self.findChild(QPushButton, "n_btn")
 
 class SaveUI(QDialog):
-    def __init__(self, spline_x, spline_y):
+    def __init__(self, spline_y, sample):
         super().__init__()
         uic.loadUi(f"{pathlib.Path(__file__).parent.absolute()}\\..\\ui\\saving_window.ui", self)
-        self.spline_x, self.spline_y = spline_x, spline_y
+        self.spline_y, self.sample_rate = spline_y, sample
         self.title = self.findChild(QLineEdit, "title")
         self.title_edf = ''
         self.setWindowTitle("Save ECG")
@@ -216,7 +217,7 @@ class SaveUI(QDialog):
         self.dont_btn.clicked.connect(self.click_n)
         self.header_text = self.findChild(QLineEdit, "header_text")
 
-        self.data_processor = DataProcessing()
+        self.data_saver = DataSaving()
 
     def click_sub(self):
         if self.header_text.text() == '' or self.title.text() == '':
@@ -224,7 +225,9 @@ class SaveUI(QDialog):
         else:
             self.header_text_str = str(self.header_text.text())
             self.title_edf = str(self.title.text()) + ".edf"
-            self.data_processor.export_to_edf(self.title_edf, self.header_text_str, self.spline_x, self.spline_y)
+            self.title_csv = str(self.title.text()) + ".CSV"
+            self.data_saver.chart_to_csv(self.title_csv, self.spline_y)
+            self.data_saver.csv_to_edf(self.title_csv, self.title_edf, self.sample_rate)
             self.close()
 
 
