@@ -192,7 +192,7 @@
           <item>
            <layout class="QVBoxLayout" name="vbox3">
             <property name="spacing">
-             <number>70</number>
+             <number>50</number>
             </property>
             <property name="topMargin">
              <number>100</number>
@@ -211,7 +211,7 @@
               <property name="minimumSize">
                <size>
                 <width>0</width>
-                <height>0</height>
+                <height>60</height>
                </size>
               </property>
               <property name="maximumSize">
@@ -235,6 +235,12 @@
             </item>
             <item>
              <widget class="QPushButton" name="adjust_btn">
+              <property name="minimumSize">
+               <size>
+                <width>0</width>
+                <height>60</height>
+               </size>
+              </property>
               <property name="maximumSize">
                <size>
                 <width>16777215</width>
@@ -256,6 +262,12 @@
             </item>
             <item>
              <widget class="QPushButton" name="change_btn">
+              <property name="minimumSize">
+               <size>
+                <width>0</width>
+                <height>60</height>
+               </size>
+              </property>
               <property name="maximumSize">
                <size>
                 <width>16777215</width>
@@ -277,6 +289,12 @@
             </item>
             <item>
              <widget class="QPushButton" name="next_btn">
+              <property name="minimumSize">
+               <size>
+                <width>0</width>
+                <height>60</height>
+               </size>
+              </property>
               <property name="maximumSize">
                <size>
                 <width>16777215</width>

@@ -1,10 +1,7 @@
 import numpy as np
 import pandas as pd
 from matplotlib import pyplot as plt
-from pyedflib import FILETYPE_EDFPLUS
 from scipy.interpolate import interp1d
-import pyedflib
-from datetime import datetime, date
 
 
 class DataProcessing:
@@ -42,10 +39,8 @@ class DataProcessing:
     def scale(self, x, y, scaling_factor_x, scaling_factor_y):
         offset_y = y[0]
 
-        # Scale the x values
         scaled_x = [xi * scaling_factor_x for xi in x]
 
-        # Scale the y values, and subtract the missing value to make the first value zero
         scaled_y = [(yi - offset_y) * scaling_factor_y for yi in y]
 
         for i in range(len(x)):
@@ -70,43 +65,22 @@ class DataProcessing:
 
         y_interp = y_linear(x_interp)
 
-        # plt.plot(x_interp, y_interp, color='red', marker='o')
-        # plt.title('EKG Plot')
-        # plt.xlabel('Time [s]')
-        # plt.ylabel('Voltage [mV]')
-        # plt.show()
-
         return x_interp, y_interp
 
-    # def export_to_edf(self, filename, header, x, y):
-    #     num_channels = len(x)
-    #     # print(x[0])
-    #     # sample_rate = int(1 / np.mean(np.diff(x[0])))
-    #     sample_rate = 38
-    #
-    #     f = pyedflib.EdfWriter(filename, num_channels, file_type=FILETYPE_EDFPLUS)
-    #
-    #     try:
-    #         f.setStartdatetime(datetime.now())
-    #
-    #         ekg_channel_info = {
-    #             'label': header,
-    #             'dimension': 'mV',
-    #             'sample_frequency': sample_rate,
-    #             # 'physical_max': round(max(y[0]), 6),
-    #             # 'physical_min': round(min(y[0]), 6)
-    #         }
-    #
-    #         for channel_num in range(num_channels):
-    #             f.setSignalHeader(edfsignal=channel_num, channel_info=ekg_channel_info)
-    #
-    #         ekg_data = y
-    #         # ekg_data = ekg_data.reshape((1, -1))
-    #
-    #         f.writeSamples(ekg_data)
-    #
-    #     finally:
-    #         f.close()
+    def show_plots(self, charts, all_spline_x, all_spline_y):
+
+        fig, axs = plt.subplots(len(charts))
+
+        for i, (spline_x, spline_y) in enumerate(zip(all_spline_x, all_spline_y)):
+            axs[i].plot(spline_x, spline_y)
+
+        fig.suptitle('ECG')
+
+        plt.tight_layout()
+        plt.xlabel('time [s]')
+        plt.ylabel('volatage [mV]')
+        fig.canvas.manager.set_window_title('ECG charts')
+        plt.show()
 
 
 

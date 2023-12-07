@@ -1,9 +1,7 @@
-import csv
-
+import sys
+import cv2
 import qimage2ndarray
 from PyQt5.QtGui import QPixmap
-from matplotlib import pyplot as plt
-
 from data_processing import DataProcessing
 from load_scale_window import ChangeUI
 from pixels_processing import PixelsProcessing
@@ -48,7 +46,6 @@ class ImageUI(QWidget):
         uic.loadUi(f"{pathlib.Path(__file__).parent.absolute()}\\..\\ui\\image_window.ui", self)
         self.setWindowIcon(QIcon(f"{pathlib.Path(__file__).parent.absolute()}\\..\\icon\\icon.png"))
         self.setWindowTitle("ECG Digitizer")
-
 
         self.move(120, 100)
         self.img_list, self.rb = [], None
@@ -122,7 +119,6 @@ class ImageUI(QWidget):
         self.speed_value = 25
         self.volt_value = 10
 
-
     def update_img(self, movable=False):
         self.img = QPixmap(qimage2ndarray.array2qimage(cv2.cvtColor(self.img_class.img, cv2.COLOR_BGR2RGB)))
         self.scene.removeItem(self.scene_img)
@@ -145,10 +141,9 @@ class ImageUI(QWidget):
         QMessageBox.information(self, "Instruction", "Mark two points on the x-axis that form a segment of 5mm, "
                                                      "then two more points on the y-axis  ", QMessageBox.Ok)
 
-        cv2.imshow("Image", self.img_class.img)
+        cv2.imshow("ECG", self.img_class.img)
 
-
-        cv2.setMouseCallback("Image", self.on_mouse)
+        cv2.setMouseCallback("ECG", self.on_mouse)
 
         dog_image = self.image_processor.difference_of_gaussians(self.img_class.img)
         mean_image = self.image_processor.mean_image(dog_image)
@@ -236,7 +231,7 @@ class ImageUI(QWidget):
 
                     all_spline_x = []
                     all_spline_y = []
-                    sample_rates =[]
+                    sample_rates = []
 
                     if self.charts is not None:
                         for chart in self.charts:
@@ -260,8 +255,8 @@ class ImageUI(QWidget):
 
                     self.reference_points.clear()
                     self.hide()
+                    self.data_processor.show_plots(self.charts, all_spline_x, all_spline_y)
                     self.open_saving_window(all_spline_y, sample_rate_final)
-
 
         if event == cv2.EVENT_MOUSEMOVE:
             zoom_factor = 3
@@ -284,7 +279,7 @@ class ImageUI(QWidget):
             zoomed_text = "Move the cursor to explore the image"
             cv2.putText(zoomed_image, zoomed_text, (10, 30), cv2.FONT_HERSHEY_SIMPLEX, 0.75, (60, 20, 220))
 
-            cv2.imshow("Zoomed Image", zoomed_image)
+            cv2.imshow("Zoomed", zoomed_image)
 
 
 def main():

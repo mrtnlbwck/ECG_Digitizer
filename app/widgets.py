@@ -1,18 +1,11 @@
 import pathlib
-import sys
 from copy import deepcopy
-
-import cv2
 import numpy as np
 from PyQt5 import uic
 from PyQt5.QtGui import *
 from PyQt5.QtCore import *
 from PyQt5.QtWidgets import *
-from PyQt5.uic.properties import QtWidgets
-
-from app.data_processing import DataProcessing
 from app.data_saving import DataSaving
-from app.load_main_window import ImageUI
 
 
 class Adjust(QWidget):
@@ -223,10 +216,18 @@ class SaveUI(QDialog):
         if self.header_text.text() == '' or self.title.text() == '':
             QMessageBox.warning(self, "Enter both values", "Please enter both values", QMessageBox.Ok)
         else:
+
+            header_input = str(self.header_text.text()).strip()
+            headers = [header.strip() for header in header_input.split(',')]
+            if len(headers) != len(self.spline_y):
+                QMessageBox.warning(self, "Invalid Headers",
+                                        "Please enter the correct number of headers separated by commas",
+                                        QMessageBox.Ok)
+                return
             self.header_text_str = str(self.header_text.text())
             self.title_edf = str(self.title.text()) + ".edf"
             self.title_csv = str(self.title.text()) + ".CSV"
-            self.data_saver.chart_to_csv(self.title_csv, self.spline_y)
+            self.data_saver.chart_to_csv(self.header_text_str, self.title_csv, self.spline_y)
             self.data_saver.csv_to_edf(self.title_csv, self.title_edf, self.sample_rate)
             self.close()
 

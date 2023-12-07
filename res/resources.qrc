@@ -2,11 +2,11 @@
   <qresource prefix="Images">
     <file>Images/blank.png</file>
     <file>Images/ekg-1.png</file>
-    <file>Images/main_background.png</file>
     <file>Images/scale_background.png</file>
     <file>Images/save.png</file>
-    <file>Images/saving_window.png</file>
     <file>Images/title.png</file>
+    <file>Images/saving_window.png</file>
+    <file>Images/main_background.png</file>
   </qresource>
   <qresource prefix="Fonts">
     <file>Fonts/Open_Sans/OpenSans-Italic-VariableFont_wdth,wght.ttf</file>
