@@ -33,7 +33,6 @@ class UI(QMainWindow):
 
         if files:
             self.files = files
-            self.close()
             self.image_window = ImageUI(self.files)
             self.image_window.show()
 
@@ -149,8 +148,11 @@ class ImageUI(QWidget):
         mean_image = self.image_processor.mean_image(dog_image)
         binary_image = self.image_processor.imthreshold(mean_image)
         result_multiply = self.image_processor.multiply(dog_image, binary_image)
-        medians = self.image_processor.dividing(result_multiply)
-        self.charts = self.image_processor.cropping(medians, result_multiply)
+        self.medians = self.image_processor.dividing(result_multiply)
+        if len(self.medians) > 1:
+            self.charts = self.image_processor.cropping(self.medians, result_multiply)
+        else:
+            self.single_chart = result_multiply
         # self.image_processor.plot_cropped_charts(self.charts)
 
         self.hide()
@@ -211,11 +213,9 @@ class ImageUI(QWidget):
             if len(self.reference_points) < 2:
                 self.reference_points.append((x, y))
                 cv2.circle(self.img_class.img, (x, y), 2, (0, 0, 255), -1)
-                cv2.putText(self.img_class.img, 'x', (x, y), cv2.FONT_HERSHEY_SIMPLEX, 0.6, (0, 0, 0), 2)
             elif len(self.reference_points) < 4:
                 self.reference_points.append((x, y))
                 cv2.circle(self.img_class.img, (x, y), 2, (255, 0, 0), -1)
-                cv2.putText(self.img_class.img, 'y', (x, y), cv2.FONT_HERSHEY_SIMPLEX, 0.6, (0, 0, 0), 2)
 
             if len(self.reference_points) == 4:
                 cv2.waitKey(500)
@@ -233,29 +233,32 @@ class ImageUI(QWidget):
                     all_spline_y = []
                     sample_rates = []
 
-                    if self.charts is not None:
-                        for chart in self.charts:
-                            pixels = self.pixels_processor.put_into_pixels(chart)
-                            sorted_data = self.data_processor.sorting(pixels)
-                            xy = self.data_processor.extract_xy(sorted_data)
-                            scaled_xy = self.data_processor.scale(*xy, self.scale_x, self.scale_y)
-                            mean_xy = self.data_processor.mean_chart(*scaled_xy)
-                            spline_xy = self.data_processor.spline(*mean_xy)
-                            spline_x, spline_y = self.data_processor.spline_with_additional_points(*spline_xy)
-                            sample_rate = int(1 / np.mean(np.diff(spline_x)))
+                    charts_to_process = self.charts if len(self.medians) > 1 else [self.single_chart]
 
-                            all_spline_x.append(spline_x)
-                            all_spline_y.append(spline_y)
-                            sample_rates.append(sample_rate)
+                    for chart in charts_to_process:
+                        pixels = self.pixels_processor.put_into_pixels(chart)
+                        sorted_data = self.data_processor.sorting(pixels)
+                        xy = self.data_processor.extract_xy(sorted_data)
+                        mean_xy = self.data_processor.mean_chart(*xy)
+                        scaled_xy = self.data_processor.scale(*mean_xy, self.scale_x, self.scale_y)
 
-                    else:
-                        print("Warning: self.charts is None. Check for proper initialization.")
+                        spline_xy = self.data_processor.spline(*scaled_xy)
+                        spline_x, spline_y = self.data_processor.spline_with_additional_points(*spline_xy)
+                        sample_rate = int(1 / np.mean(np.diff(spline_x)))
+
+                        all_spline_x.append(spline_x)
+                        all_spline_y.append(spline_y)
+                        sample_rates.append(sample_rate)
 
                     sample_rate_final = int(np.mean(sample_rates))
-
                     self.reference_points.clear()
                     self.hide()
-                    self.data_processor.show_plots(self.charts, all_spline_x, all_spline_y)
+
+                    if len(self.medians) > 1:
+                        self.data_processor.show_plots(self.charts, all_spline_x, all_spline_y)
+                    else:
+                        self.data_processor.show_plot(self.single_chart, all_spline_x[0], all_spline_y[0])
+
                     self.open_saving_window(all_spline_y, sample_rate_final)
 
         if event == cv2.EVENT_MOUSEMOVE:
@@ -276,8 +279,23 @@ class ImageUI(QWidget):
             cursor_color = (0, 255, 0)  # Green color for cursor
             cv2.drawMarker(zoomed_image, (cursor_x * zoom_factor, cursor_y * zoom_factor),
                            cursor_color, cv2.MARKER_CROSS, markerSize=15, thickness=2)
-            zoomed_text = "Move the cursor to explore the image"
-            cv2.putText(zoomed_image, zoomed_text, (10, 30), cv2.FONT_HERSHEY_SIMPLEX, 0.75, (60, 20, 220))
+            if len(self.reference_points) < 1:
+                zoomed_text = "Put first point in x-axis"
+                color = (0, 0, 255)
+            elif len(self.reference_points) < 2:
+                zoomed_text = "Put second point in x-axis"
+                color = (0, 0, 255)
+            elif len(self.reference_points) < 3:
+                zoomed_text = "Put first point in y-axis"
+                color = (255, 0, 0)
+            elif len(self.reference_points) < 4:
+                zoomed_text = "Put second point in y-axis"
+                color = (255, 0, 0)
+            else:
+                zoomed_text = " "
+                color = (255, 0, 0)
+
+            cv2.putText(zoomed_image, zoomed_text, (10, 30), cv2.FONT_HERSHEY_DUPLEX, 1, color, 1)
 
             cv2.imshow("Zoomed", zoomed_image)
 

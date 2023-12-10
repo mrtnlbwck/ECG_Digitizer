@@ -14,7 +14,7 @@ class ImageProcessing:
 
         return img_gray, img_rgb
     def difference_of_gaussians(self, image):
-        blur1 = cv2.GaussianBlur(image, (151, 151), 0)
+        blur1 = cv2.GaussianBlur(image, (161, 161), 0)
         blur2 = cv2.GaussianBlur(image, (5, 5), 0)
         dog = cv2.absdiff(blur1, blur2)
 
@@ -36,7 +36,7 @@ class ImageProcessing:
         return mean_image
 
     def imthreshold(self, imin):
-        prog = 20
+        prog = 14
         xx, yy = imin.shape
         o = np.zeros((xx, yy), dtype=np.uint8)
 
@@ -63,32 +63,42 @@ class ImageProcessing:
     def dividing(self, img):
         histogram_y = np.sum(img, axis=1)
         max_value = np.max(histogram_y)
+        #
+        # plt.figure(figsize=(10, 4))
+        # plt.plot(histogram_y, color='blue')
+        # plt.title('Histogram of the Image')
+        # plt.xlabel('Pixel Rows')
+        # plt.ylabel('Sum of Pixel Values')
+        # plt.show()
+
         min_peak_height = max_value / 2
 
-        # Set the minimum distance between peaks (adjust as needed)
         min_peak_distance = 10
 
         peaks, _ = find_peaks(histogram_y, height=min_peak_height, distance=min_peak_distance)
-
 
         distances = np.diff(peaks)
         half_distances = distances // 2
 
         medians = peaks[:-1] + half_distances
 
+
+
         return medians
 
     def cropping(self, medians, result_multiply):
         charts = []
 
-        for i in range(len(medians) + 1):
-            if i == 0:
-                charts.append(result_multiply[:medians[i]])
-            elif i == len(medians):
-                charts.append(result_multiply[medians[i - 1]:])
-            else:
-                charts.append(result_multiply[medians[i - 1]:medians[i]])
-
+        if len(medians) > 1 :
+            for i in range(len(medians) + 1):
+                if i == 0:
+                    charts.append(result_multiply[:medians[i]])
+                elif i == len(medians):
+                    charts.append(result_multiply[medians[i - 1]:])
+                else:
+                    charts.append(result_multiply[medians[i - 1]:medians[i]])
+        else:
+            charts.append(result_multiply)
 
         return charts
 

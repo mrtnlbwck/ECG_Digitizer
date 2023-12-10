@@ -204,6 +204,7 @@ class SaveUI(QDialog):
         self.title_edf = ''
         self.setWindowTitle("Save ECG")
         self.show()
+        self.move(100, 100)
         self.sub_btn = self.findChild(QPushButton, "sub_btn")
         self.sub_btn.clicked.connect(self.click_sub)
         self.dont_btn = self.findChild(QPushButton, "dont_btn")
@@ -219,6 +220,7 @@ class SaveUI(QDialog):
 
             header_input = str(self.header_text.text()).strip()
             headers = [header.strip() for header in header_input.split(',')]
+            print(len(self.spline_y))
             if len(headers) != len(self.spline_y):
                 QMessageBox.warning(self, "Invalid Headers",
                                         "Please enter the correct number of headers separated by commas",

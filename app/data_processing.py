@@ -72,7 +72,7 @@ class DataProcessing:
         fig, axs = plt.subplots(len(charts))
 
         for i, (spline_x, spline_y) in enumerate(zip(all_spline_x, all_spline_y)):
-            axs[i].plot(spline_x, spline_y)
+            axs[i].plot(spline_x, spline_y, color='green')
 
         fig.suptitle('ECG')
 
@@ -82,5 +82,10 @@ class DataProcessing:
         fig.canvas.manager.set_window_title('ECG charts')
         plt.show()
 
+    def show_plot(self, chart, spline_x, spline_y):
 
-
+        plt.plot(spline_x, spline_y)
+        plt.title('ECG chart')
+        plt.xlabel('time [s]')
+        plt.ylabel('volatage [mV]')
+        plt.show()
